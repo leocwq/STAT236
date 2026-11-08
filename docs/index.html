@@ -210,7 +210,7 @@
   <div class="setup">
     <div><strong>Data</strong>Amazon Review Polarity: 20,000 training and 10,000 test reviews, half positive and half negative.</div>
     <div><strong>Representation</strong>Frozen <code>bert-base-uncased</code>, one 768-dimensional embedding per review. The encoder is never fine-tuned.</div>
-    <div><strong>Comparison</strong>Shrink each embedding to k = 25, 50, 100, 200 or 400 dimensions three different ways, then classify with the same logistic regression.</div>
+    <div><strong>Comparison</strong>Shrink each embedding to k = 1, 2, 5, 10, 25, 50, 75, 100, 150, 200, 300 or 400 dimensions three different ways, then classify with the same logistic regression.</div>
   </div>
 </div>
 
@@ -332,7 +332,7 @@
     <p>Here h<sub>it</sub> is the vector for token t and a<sub>it</sub> is 1 for real tokens and 0 for padding. This gives a 20,000 × 768 training matrix and a 10,000 × 768 test matrix, computed once and reused by every experiment.</p>
 
     <h3>Representation reduction</h3>
-    <p>Each coordinate is first standardized with its training mean and standard deviation, and the same transform is applied to the test set. We then compare reduced sizes k = 25, 50, 100, 200 and 400 against the full 768-dimensional baseline.</p>
+    <p>Each coordinate is first standardized with its training mean and standard deviation, and the same transform is applied to the test set. We then compare reduced sizes k = 1, 2, 5, 10, 25, 50, 75, 100, 150, 200, 300 and 400 against the full 768-dimensional baseline.</p>
     <div class="methods">
       <div class="m random">
         <h4>Random coordinates</h4>
@@ -341,7 +341,7 @@
       </div>
       <div class="m l1">
         <h4>L1-selected coordinates</h4>
-        <p>Fit L1-regularized logistic regression on the training set along a path of 17 penalty values.</p>
+        <p>Fit L1-regularized logistic regression on the training set along a path of 33 penalty values.</p>
         <p>For each k, take the strongest penalty that leaves at least k nonzero coefficients and keep the k with the largest absolute weights.</p>
       </div>
       <div class="m pca">
@@ -379,16 +379,10 @@
     </figure>
 
     <h3>Classification performance</h3>
-    <p>With all 768 dimensions the classifier reaches <b>90.80%</b> test accuracy (macro-F1 0.9080). Accuracy rises with k for every method. Both L1 selection and PCA beat the average random subset at every size, and the gap is largest when k is small: at k = 25, L1 reaches 85.92% against 73.36% for random selection, a 12.56 point advantage. PCA is slightly ahead of L1 at k = 25 and 50; L1 is ahead from k = 100 on.</p>
+    <p>With all 768 dimensions the classifier reaches <b>90.80%</b> test accuracy (macro-F1 0.9080). Accuracy generally rises with k for every method. Both L1 selection and PCA beat the average random subset at every size, and the gap is largest when k is small: at k = 5, L1 reaches 77.34% against 61.77% for random selection, a 15.57 point advantage. L1 is ahead of PCA at k = 1 and 2, PCA is ahead from k = 5 through 75, and L1 is slightly ahead from k = 100 on.</p>
     <figure>
-      <div class="legend">
-        <span><i style="background:var(--random)"></i>Random coordinates, mean ± 1 sd over 20 draws</span>
-        <span><i style="background:var(--l1)"></i>L1-selected coordinates</span>
-        <span><i style="background:var(--pca)"></i>PCA components</span>
-        <span><i class="dash"></i>Full 768</span>
-      </div>
-      <div class="chartwrap"><svg id="chartAcc" role="img" aria-label="Test accuracy against number of dimensions kept for random, L1 and PCA"></svg><div class="tip"></div></div>
-      <figcaption><b>Figure 4.</b> Test accuracy against dimensions kept (log scale). Hover or tap for exact values. Macro-F1 follows the same pattern to within 0.01 points, since the test set is balanced.</figcaption>
+      <img src="assets/fig4_accuracy_vs_k.png" alt="Test accuracy and macro-F1 against dimensions kept for random coordinate selection, L1 selection and PCA, at 12 sizes from k = 1 to 400 on a log scale. Random selection shows mean plus or minus one standard deviation across 20 draws; dashed lines mark the full 768-dimensional baseline.">
+      <figcaption><b>Figure 4.</b> Test accuracy (left) and macro-F1 (right) against dimensions kept (log scale). The shaded band shows ±1 sample standard deviation across 20 random draws. Macro-F1 follows the same overall pattern as accuracy.</figcaption>
     </figure>
     <div class="tablewrap">
       <table id="tableAcc">
@@ -399,7 +393,7 @@
     <p class="tcap">Table 3. Test accuracy (%). Random is mean ± sample sd across 20 subsets. Bold marks the best reduced method at each k.</p>
 
     <h3>Performance loss relative to the full representation</h3>
-    <p>L1 selection keeps most of the baseline performance with far fewer coordinates. At k = 100 it keeps about 13% of the coordinates and loses 0.84 points. At k = 200 it keeps about 26% and is only 0.12 points below the baseline. The gains then flatten: going from 100 to 200 coordinates adds 0.72 points, but going from 200 to 400 adds only 0.02. PCA also closes in, reaching 90.51% with 400 components.</p>
+    <p>L1 selection keeps most of the baseline performance with far fewer coordinates. At k = 100 it keeps about 13% of the coordinates and loses 1.02 points. At k = 200 it keeps about 26% and is 0.34 points below the baseline. The gains then flatten: going from 100 to 200 coordinates adds 0.68 points, while going from 200 to 400 adds 0.19. The best tested L1 result is 90.66% at k = 300, 0.14 points below the baseline. PCA also closes in, reaching 90.51% with 400 components.</p>
     <figure>
       <div class="legend">
         <span><i style="background:var(--random)"></i>Random (mean)</span>
@@ -411,7 +405,7 @@
     </figure>
 
     <h3>Variability across random subsets</h3>
-    <p>Random selection improves from 73.36% at k = 25 to 90.16% at k = 400, and its spread shrinks from a standard deviation of 2.22 points to 0.15. Small random subsets are a gamble on which coordinates you happen to draw; large ones give consistent results that approach the baseline, though they stay below L1 and PCA on average.</p>
+    <p>Random selection improves from 54.81% at k = 1 to 90.25% at k = 400. Its standard deviation is 3.77 points at k = 1, peaks at 4.24 points at k = 2, and then falls to 0.19 points at k = 400. Small random subsets are a gamble on which coordinates you happen to draw; large ones give consistent results that approach the baseline, though they stay below L1 and PCA on average.</p>
     <figure>
       <div class="legend">
         <span><i class="dot" style="background:var(--random)"></i>One random draw (20 per k)</span>
@@ -420,7 +414,7 @@
         <span><i class="dot" style="background:var(--pca)"></i>PCA</span>
       </div>
       <div class="chartwrap"><svg id="chartRuns" role="img" aria-label="Test accuracy of each of the 20 random coordinate subsets at every k, with the L1 and PCA results for comparison"></svg><div class="tip"></div></div>
-      <figcaption><b>Figure 6.</b> Every one of the 20 random draws at each k. The spread narrows as k grows. Even the best of the 20 draws scores below both L1 and PCA at every k, though only by 0.06 points against PCA at k = 400.</figcaption>
+      <figcaption><b>Figure 6.</b> Every one of the 20 random draws at each k. The spread generally narrows as k grows. At k = 1, the best random draw ties L1 and exceeds PCA. From k = 2 through 300, even the best draw is below both methods. At k = 400, the best draw reaches 90.63%, above PCA at 90.51% but just below L1 at 90.65%.</figcaption>
     </figure>
     <div class="tablewrap">
       <table id="tableRange">
@@ -428,7 +422,7 @@
         <tbody></tbody>
       </table>
     </div>
-    <p class="tcap">Table 5 (report appendix). Lowest and highest test accuracy (%) among the 20 random subsets.</p>
+    <p class="tcap">Table 5. Lowest and highest test accuracy (%) among the 20 random subsets.</p>
   </section>
 
   <!-- 4 DISCUSSION -->
@@ -439,14 +433,14 @@
     <ul class="points">
       <li><b>A smaller representation can keep most of the performance, but the choice of coordinates matters.</b> L1 selection beats the average random subset at every size, most of all when k is small, so supervised selection does find coordinates that carry more useful information than an arbitrary subset.</li>
       <li><b>Distributed signal and redundancy coexist.</b> Hundreds of coordinates are individually correlated with sentiment, yet 200 selected ones nearly match the full baseline. That does not make the embeddings sparse or the other coordinates useless; their information may overlap with what is kept. The selected coordinates also depend on the embedding basis, so they are not a universal set of sentiment features.</li>
-      <li><b>PCA is a competitive alternative.</b> It edges out L1 at k = 25 and 50, where packing many coordinates into a few directions helps, while L1 is slightly ahead at larger sizes. PCA keeps variance rather than optimizing for prediction, as Figure 3 shows with PC4 beating PC1. The gaps are small enough that neither method is clearly better in general.</li>
+      <li><b>PCA is a competitive alternative.</b> It outperforms L1 from k = 5 through 75, while L1 leads at k = 1 and 2 and is slightly ahead from k = 100 onward. PCA keeps variance rather than optimizing for prediction, as Figure 3 shows with PC4 beating PC1. The preferred method depends on k; these results do not establish a general winner across tasks.</li>
     </ul>
 
     <h3>Limitations and future work</h3>
     <ul class="points">
       <li>One balanced sample, one frozen BERT model, mean pooling and a linear classifier. Results may differ for other tasks, models or pooling. Exact-text deduplication does not rule out near-duplicate reviews.</li>
       <li>L1 selection and PCA are fitted on the whole training set before cross-validation, so validation scores may be optimistic. A cleaner version would refit standardization, selection and PCA inside each fold.</li>
-      <li>The random-subset spread measures sensitivity to coordinate choice on fixed data, not uncertainty over new samples, and L1 and PCA stability across samples is not assessed. Close scores such as 90.68% and 90.80% should not be read as statistically equivalent.</li>
+      <li>The random-subset spread measures sensitivity to coordinate choice on fixed data, not uncertainty over new samples, and L1 and PCA stability across samples is not assessed. Close scores such as 90.66% and 90.80% should not be read as statistically equivalent.</li>
       <li>Reduction happens after BERT has already run. It shrinks stored features and the classifier, not transformer inference cost.</li>
       <li>Next steps: fix the cross-validation procedure, repeat the analysis on new data samples, add more tasks, and compare test predictions pairwise to measure how uncertain the gaps are.</li>
     </ul>
@@ -455,7 +449,7 @@
   <!-- 5 CONCLUSION -->
   <section class="s" id="conclusion">
     <h2><span class="n">5</span>Conclusion</h2>
-    <p class="conclusion">Frozen BERT embeddings can be shrunk a lot for Amazon Polarity sentiment classification. L1 selection keeps 200 of 768 coordinates and reaches 90.68% accuracy, against 90.80% with all of them. Both L1 selection and PCA beat average random selection at every size tested, with PCA slightly ahead at the smallest sizes. The results support task-specific predictive redundancy and show that informed reduction preserves performance better than removing coordinates at random. They do not establish universal sparsity or an optimal dimension for transformer representations.</p>
+    <p class="conclusion">Frozen BERT embeddings can be shrunk a lot for Amazon Polarity sentiment classification. L1 selection keeps 200 of 768 coordinates and reaches 90.46% accuracy, against 90.80% with all of them; its best tested result is 90.66% at k = 300. Both L1 selection and PCA beat average random selection at every size tested. L1 leads PCA at k = 1 and 2, PCA leads from k = 5 through 75, and L1 is slightly ahead from k = 100 onward. The results support task-specific predictive redundancy and show that informed reduction preserves performance better than removing coordinates at random. They do not establish universal sparsity or an optimal dimension for transformer representations.</p>
   </section>
 
   <!-- REPRODUCE -->
@@ -491,26 +485,30 @@
 
 <script>
 (function () {
-  // ===== Results data (from the notebook run log; add new k values here) =====
+  // ===== Results data from the updated notebook run log =====
   const FULL = 0.9080;
-  const L1  = { 25: 0.8592, 50: 0.8822, 100: 0.8996, 200: 0.9068, 400: 0.9070 };
-  const PCA = { 25: 0.8668, 50: 0.8877, 100: 0.8970, 200: 0.9025, 400: 0.9051 };
+  const L1  = { 1: 0.6713, 2: 0.7115, 5: 0.7734, 10: 0.8083, 25: 0.8572, 50: 0.8797, 75: 0.8908, 100: 0.8978, 150: 0.9036, 200: 0.9046, 300: 0.9066, 400: 0.9065 };
+  const PCA = { 1: 0.5684, 2: 0.6700, 5: 0.7903, 10: 0.8371, 25: 0.8668, 50: 0.8877, 75: 0.8915, 100: 0.8970, 150: 0.9028, 200: 0.9025, 300: 0.9039, 400: 0.9051 };
   const RUNS = {
-    25:  [0.7469,0.6899,0.7486,0.7612,0.7264,0.7419,0.7618,0.7228,0.6833,0.7628,0.7168,0.7354,0.7218,0.7122,0.7515,0.7494,0.7170,0.7391,0.7392,0.7438],
-    50:  [0.8130,0.8066,0.7818,0.8270,0.8189,0.7698,0.8274,0.8108,0.7872,0.7948,0.7849,0.7996,0.8116,0.7855,0.8199,0.8072,0.7993,0.7972,0.7902,0.8060],
-    100: [0.8582,0.8576,0.8588,0.8580,0.8626,0.8573,0.8560,0.8555,0.8546,0.8576,0.8491,0.8523,0.8562,0.8444,0.8614,0.8589,0.8395,0.8525,0.8522,0.8643],
-    200: [0.8866,0.8881,0.8861,0.8871,0.8907,0.8820,0.8843,0.8848,0.8798,0.8882,0.8860,0.8828,0.8888,0.8801,0.8891,0.8807,0.8823,0.8893,0.8827,0.8884],
-    400: [0.8999,0.9032,0.9030,0.9023,0.9039,0.9026,0.8994,0.9018,0.9045,0.9011,0.9002,0.9009,0.9017,0.9008,0.9028,0.8993,0.8997,0.9015,0.9006,0.9034]
+    1: [0.5668,0.6713,0.5413,0.5659,0.5224,0.5074,0.5103,0.5714,0.5364,0.5290,0.5295,0.5548,0.5132,0.5649,0.5361,0.5466,0.5329,0.5974,0.5562,0.5080],
+    2: [0.5442,0.6189,0.5292,0.5639,0.5259,0.6008,0.6119,0.5343,0.4996,0.6555,0.5767,0.5288,0.5224,0.5317,0.5376,0.5893,0.5895,0.5134,0.5089,0.5393],
+    5: [0.5944,0.6733,0.5651,0.6769,0.6166,0.6773,0.6380,0.5869,0.6239,0.6137,0.6331,0.5580,0.6069,0.5751,0.6452,0.5712,0.6082,0.6353,0.6325,0.6226],
+    10: [0.6958,0.7027,0.7069,0.6739,0.6430,0.7013,0.6324,0.6929,0.6229,0.6910,0.7025,0.6559,0.6751,0.6865,0.7003,0.6643,0.6517,0.7163,0.6701,0.5743],
+    25: [0.7071,0.7905,0.7698,0.7532,0.7462,0.7042,0.7185,0.7537,0.7404,0.7306,0.7534,0.7139,0.7461,0.7695,0.7629,0.7839,0.7276,0.7140,0.7546,0.7132],
+    50: [0.8230,0.8086,0.8209,0.8084,0.7955,0.7997,0.8151,0.7927,0.7776,0.8472,0.8151,0.7957,0.8162,0.8228,0.7842,0.8123,0.7955,0.8127,0.8107,0.8245],
+    75: [0.8525,0.8067,0.8462,0.8364,0.8438,0.8183,0.8220,0.8396,0.8280,0.8378,0.8435,0.8341,0.8162,0.8246,0.8353,0.8540,0.8315,0.8539,0.8376,0.8320],
+    100: [0.8393,0.8455,0.8509,0.8543,0.8615,0.8520,0.8527,0.8516,0.8590,0.8597,0.8572,0.8631,0.8494,0.8537,0.8535,0.8487,0.8585,0.8517,0.8483,0.8630],
+    150: [0.8813,0.8754,0.8807,0.8711,0.8735,0.8610,0.8759,0.8751,0.8615,0.8760,0.8806,0.8764,0.8791,0.8723,0.8818,0.8739,0.8775,0.8732,0.8722,0.8851],
+    200: [0.8851,0.8915,0.8785,0.8766,0.8827,0.8857,0.8902,0.8876,0.8847,0.8844,0.8832,0.8894,0.8875,0.8816,0.8850,0.8930,0.8849,0.8881,0.8862,0.8936],
+    300: [0.8978,0.9002,0.8976,0.8958,0.8960,0.8968,0.8960,0.8963,0.8981,0.9000,0.8980,0.8922,0.8949,0.9000,0.8993,0.8985,0.8965,0.8959,0.8953,0.8957],
+    400: [0.8996,0.9048,0.9007,0.9047,0.9013,0.9017,0.9034,0.9010,0.9030,0.9063,0.9011,0.9014,0.9034,0.9039,0.9017,0.9009,0.8993,0.9017,0.9038,0.9053]
   };
   const KS = Object.keys(L1).map(Number).sort((a, b) => a - b);
   const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
   const sd = a => { const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1)); };
-  // Mean and sd come from the notebook's summary.csv (unrounded runs), so they match Table 3 exactly.
-  // The run log above is rounded to 4 decimals and is used for the dots, minimum and maximum.
-  const RAND_SUMMARY = { 25: [0.7336, 0.0222], 50: [0.8019, 0.0157], 100: [0.8554, 0.0059], 200: [0.8854, 0.0034], 400: [0.9016, 0.0015] };
+  // Accuracy is exact to four decimals on the 10,000-review test set.
   const RAND = {}; KS.forEach(k => RAND[k] = {
-    mean: RAND_SUMMARY[k] ? RAND_SUMMARY[k][0] : mean(RUNS[k]),
-    sd: RAND_SUMMARY[k] ? RAND_SUMMARY[k][1] : sd(RUNS[k]),
+    mean: mean(RUNS[k]), sd: sd(RUNS[k]),
     min: Math.min(...RUNS[k]), max: Math.max(...RUNS[k]) });
   window.__RESULTS = { KS, RAND, L1, PCA, FULL };
 
@@ -557,7 +555,8 @@
         el('line', { x1: m.l, x2: W - m.r, y1: yOf(v), y2: yOf(v), stroke: C.grid, 'stroke-width': 1 });
         el('text', { x: m.l - 8, y: yOf(v) + 4, 'text-anchor': 'end', 'font-size': fs, fill: C.ink3 }).textContent = cfg.yFmt(v);
       });
-      KS.forEach(k => el('text', { x: xOf(k), y: H - 24, 'text-anchor': 'middle', 'font-size': fs, fill: C.ink3 }).textContent = k);
+      const labelKs = small ? [1, 5, 25, 100, 400] : (cfg.logLabels ? [1, 2, 5, 10, 25, 50, 100, 200, 400] : KS);
+      KS.filter(k => labelKs.includes(k)).forEach(k => el('text', { x: xOf(k), y: H - 24, 'text-anchor': 'middle', 'font-size': fs, fill: C.ink3 }).textContent = k);
       el('text', { x: m.l + pw / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': fs, fill: C.ink2 }).textContent = cfg.xLabel;
       if (cfg.yTitle) el('text', { x: m.l - 8, y: 14, 'font-size': fs, fill: C.ink2 }).textContent = cfg.yTitle;
       cfg.render(el, { W, H, m, pw, ph, xOf, yOf, fs, small });
@@ -594,38 +593,15 @@
     lab.forEach(o => el('text', { x: xOf(KS[KS.length - 1]) + 10, y: o.y, 'font-size': fs, fill: C.ink2 }).textContent = o.t);
   }
 
-  // ===== Figure 4: accuracy vs k =====
-  makeChart(document.getElementById('chartAcc'), {
-    height: s => s ? 340 : 400,
-    xOf: logX,
-    yOf: (t, ph) => v => t + (0.92 - v) / (0.92 - 0.70) * ph,
-    yTicks: [0.70, 0.75, 0.80, 0.85, 0.90],
-    yFmt: v => (v * 100).toFixed(0) + '%',
-    xLabel: 'dimensions kept, k (log scale)',
-    render(el, g) {
-      const { xOf, yOf, W, m, fs } = g;
-      el('line', { x1: m.l, x2: W - m.r, y1: yOf(FULL), y2: yOf(FULL), stroke: C.ink, 'stroke-width': 2, 'stroke-dasharray': '6 5' });
-      el('text', { x: m.l + 6, y: yOf(FULL) - 8, 'font-size': fs, fill: C.ink, 'font-weight': 600 }).textContent = 'Full 768 dimensions: 90.80%';
-      const band = KS.map(k => `${xOf(k)},${yOf(RAND[k].mean + RAND[k].sd)}`).concat(KS.slice().reverse().map(k => `${xOf(k)},${yOf(RAND[k].mean - RAND[k].sd)}`)).join(' ');
-      el('polygon', { points: band, fill: C.random, 'fill-opacity': 0.15 });
-      [['random', k => RAND[k].mean, 'circle'], ['l1', k => L1[k], 'square'], ['pca', k => PCA[k], 'triangle']].forEach(([key, f, shape]) => {
-        el('polyline', { points: KS.map(k => `${xOf(k)},${yOf(f(k))}`).join(' '), fill: 'none', stroke: C[key], 'stroke-width': 2.5, 'stroke-linejoin': 'round' });
-        KS.forEach(k => marker(el, shape, xOf(k), yOf(f(k)), C[key]));
-      });
-      const kl = KS[KS.length - 1];
-      endLabels(el, xOf, [{ t: 'L1', y: yOf(L1[kl]) }, { t: 'PCA', y: yOf(PCA[kl]) }, { t: 'Random', y: yOf(RAND[kl].mean) }], fs);
-    },
-    tip: k => row(C.l1, 'L1-selected', pct(L1[k])) + row(C.pca, 'PCA', pct(PCA[k])) + row(C.random, 'Random mean', `${pct(RAND[k].mean)} ± ${p2(RAND[k].sd)}`) + row(C.ink, 'Full 768', pct(FULL))
-  });
-
   // ===== Figure 5: loss vs full (log y) =====
   const LOSS = { l1: k => (FULL - L1[k]) * 100, pca: k => (FULL - PCA[k]) * 100, random: k => (FULL - RAND[k].mean) * 100 };
-  const lo = 0.05, hi = 30;
+  const lo = 0.05, hi = 50;
   makeChart(document.getElementById('chartLoss'), {
     height: s => s ? 320 : 360,
     xOf: logX,
+    logLabels: true,
     yOf: (t, ph) => v => t + (Math.log(hi) - Math.log(v)) / (Math.log(hi) - Math.log(lo)) * ph,
-    yTicks: [0.1, 0.3, 1, 3, 10, 30],
+    yTicks: [0.1, 0.3, 1, 3, 10, 30, 50],
     yFmt: v => String(v),
     yTitle: 'points below full 768',
     xLabel: 'dimensions kept, k (log scale)',
@@ -645,8 +621,8 @@
   makeChart(document.getElementById('chartRuns'), {
     height: s => s ? 360 : 420,
     xOf: (l, pw) => k => l + (KS.indexOf(k) + 0.5) / KS.length * pw,
-    yOf: (t, ph) => v => t + (0.92 - v) / (0.92 - 0.66) * ph,
-    yTicks: [0.70, 0.75, 0.80, 0.85, 0.90],
+    yOf: (t, ph) => v => t + (0.92 - v) / (0.92 - 0.48) * ph,
+    yTicks: [0.50, 0.60, 0.70, 0.80, 0.90],
     yFmt: v => (v * 100).toFixed(0) + '%',
     xLabel: 'dimensions kept, k',
     render(el, g) {
